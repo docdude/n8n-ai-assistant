@@ -1,0 +1,25 @@
+# ---------- Single stage: copy pre-built assets ----------
+FROM docker.n8n.io/n8nio/n8n:1.108.0
+
+USER root
+
+# Wipe stock UI assets to avoid mixing old/new
+RUN rm -rf \
+  /usr/local/lib/node_modules/@n8n/editor-ui/dist/* \
+  /usr/local/lib/node_modules/n8n/dist/public/* \
+  /usr/local/lib/node_modules/n8n/dist/assets/* \
+  /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-editor-ui@file+packages+frontend+editor-ui/node_modules/n8n-editor-ui/dist/*
+
+# Copy your freshly built Editor UI everywhere n8n may serve from
+COPY packages/frontend/editor-ui/dist/ \
+  /usr/local/lib/node_modules/@n8n/editor-ui/dist/
+COPY packages/frontend/editor-ui/dist/ \
+  /usr/local/lib/node_modules/n8n/dist/public/
+COPY packages/frontend/editor-ui/dist/ \
+  /usr/local/lib/node_modules/n8n/dist/assets/
+COPY packages/frontend/editor-ui/dist/ \
+  /usr/local/lib/node_modules/n8n/node_modules/.pnpm/n8n-editor-ui@file+packages+frontend+editor-ui/node_modules/n8n-editor-ui/dist/
+
+RUN chown -R node:node /usr/local/lib/node_modules
+USER node
+WORKDIR /home/node

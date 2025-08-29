@@ -1,0 +1,115 @@
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+    image: n8n-ai-assistant:1.108.0-custom
+    container_name: n8n
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - qdrant
+      # ollama is optional - only available when using --profile ollama-cpu or --profile ollama-gpu
+
+    ports:
+      - '5678:5678'
+    environment:
+      # --- timezone / host / ports
+      TZ: America/Denver
+      GENERIC_TIMEZONE: America/Denver
+
+      # --- IMPORTANT: public URL that n8n uses in webhooks (your Cloudflare domain)
+      WEBHOOK_URL: 'https://n8n.docdude.org' # <— set to your real HTTPS domain
+
+      # --- DB: use Postgres (AI kit style)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: '5432'
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: n8n
+
+      # --- Encryption key: use the SAME key you had before (or leave unset IF you exported decrypted creds)
+      # N8N_ENCRYPTION_KEY: "PASTE_THE_LONG_KEY_FROM_/home/node/.n8n/config"
+
+      # --- AI agent niceties
+      N8N_COMMUNITY_PACKAGES_ENABLED: 'true'
+      N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE: 'true'
+      N8N_AI_ENABLED: 'true'
+      N8N_AI_ASSISTANT_BASE_URL: 'http://ollama:11434' # Use local Ollama instance
+      VITE_AI_ASSISTANT_WEBHOOK_URL: 'http://localhost:5678/webhook/ai-assistant' # Assistant webhook endpoint
+
+      # Optionally pre-wire API keys (you can also add via Credentials UI)
+      # OPENAI_API_KEY: sk-...
+      # ANTHROPIC_API_KEY: sk-ant-...
+
+      # If you ever target Ollama as a provider:
+      # N8N_DEFAULT_LOCALE: "en"   # not required; just an example env
+
+    volumes:
+      # Keep your old volume so files/exports on /home/node/.n8n persist
+      - n8n_n8n_data:/home/node/.n8n
+      # If you had a host bind for local files, keep it:
+      - ./local-files:/files
+
+  postgres:
+    image: postgres:15
+    container_name: n8n-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: n8n
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8n
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.0
+    container_name: n8n-qdrant
+    restart: unless-stopped
+    ports:
+      - '6333:6333'
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # --- Optional local LLMs via Ollama (disabled by default) ---
+  # CPU profile
+  ollama:
+    image: ollama/ollama:latest
+    container_name: n8n-ollama
+    restart: unless-stopped
+    profiles: ['ollama-cpu']
+    ports:
+      - '11434:11434'
+    environment:
+      OLLAMA_KEEP_ALIVE: '5m'
+    volumes:
+      - ollama_data:/root/.ollama
+
+  # NVIDIA GPU profile (enable with: docker compose --profile ollama-gpu up -d)
+  ollama-gpu:
+    image: ollama/ollama:latest
+    container_name: n8n-ollama-gpu
+    restart: unless-stopped
+    profiles: ['ollama-gpu']
+    ports:
+      - '11434:11434'
+    environment:
+      OLLAMA_KEEP_ALIVE: '5m'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ['gpu']
+    volumes:
+      - ollama_data:/root/.ollama
+    # If your Docker needs explicit GPU runtime flags, you can add:
+    # runtime: nvidia
+    # environment:
+    #   NVIDIA_VISIBLE_DEVICES: all
+
+volumes:
+  n8n_n8n_data:
+  postgres_data:
+  qdrant_data:
+  ollama_data:
