@@ -1,6 +1,101 @@
 ![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
 
-# n8n - Secure Workflow Automation for Technical Teams
+# n8n AI Assistant with Local Ollama
+
+A modified version of n8n that enables the AI assistant feature using local Ollama instead of n8n's cloud AI service.
+
+## 🎯 Features
+
+- ✅ AI Assistant button enabled in frontend
+- ✅ Local Ollama integration (no cloud dependencies)
+- ✅ Docker-based deployment with PostgreSQL
+- ✅ All original n8n functionality preserved
+- ✅ Workflow import/export capabilities
+
+## 🚀 Quick Start
+
+```bash
+git clone https://github.com/docdude/n8n-ai-assistant.git
+cd n8n-ai-assistant
+docker compose up -d
+```
+
+Access n8n at `http://localhost:5678`
+
+## 📋 Current Status
+
+**Working:**
+- n8n instance with AI assistant button visible
+- Ollama service running with `llama3.2:3b` and `llama3.1:8b-instruct-q4_0`
+- Data persistence with PostgreSQL
+- Workflow and credential management
+
+**In Progress:**
+- Backend licensing bypass to connect AI service to Ollama
+- See `AI_ASSISTANT_PROGRESS.md` for detailed status
+
+## 🛠 Implementation Details
+
+### Modified Files
+- `packages/frontend/editor-ui/src/stores/settings.store.ts` - Force-enable AI assistant
+- `Dockerfile.custom` - Custom build with frontend patches only
+- `docker-compose.yaml` - Full stack with PostgreSQL, Ollama, Qdrant
+- `packages/cli/src/services/local-ai.service.ts` - Local Ollama integration
+
+### Environment Variables
+```env
+N8N_AI_ENABLED=true
+N8N_AI_ASSISTANT_BASE_URL=http://ollama:11434
+DB_TYPE=postgresdb
+N8N_COMMUNITY_PACKAGES_ENABLED=true
+```
+
+## 📚 Documentation
+
+- `AI_ASSISTANT_PROGRESS.md` - Detailed progress and technical notes
+- `docker-compose.yaml` - Service configuration
+- `Dockerfile.custom` - Build configuration
+
+## 🔧 Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   n8n Frontend  │────│   n8n Backend   │────│   PostgreSQL    │
+│   (Patched)     │    │   (Vanilla)     │    │   Database      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                │
+                       ┌─────────────────┐    ┌─────────────────┐
+                       │   Local AI      │────│     Ollama      │
+                       │   Service       │    │   (llama3.2)    │
+                       └─────────────────┘    └─────────────────┘
+```
+
+## 🎯 Roadmap
+
+- [ ] Complete backend licensing bypass
+- [ ] Test AI assistant chat functionality
+- [ ] Add model selection in UI
+- [ ] Enhance streaming responses
+- [ ] Add more Ollama models
+
+## 📝 Contributing
+
+This is a personal fork for self-hosted AI assistant functionality.
+
+Based on n8n v1.108.0
+
+## ⚖️ License
+
+Same as original n8n - see LICENSE files.
+
+---
+
+**Original n8n**: https://github.com/n8n-io/n8n
+
+---
+
+# Original n8n README
 
 n8n is a workflow automation platform that gives technical teams the flexibility of code with the speed of no-code. With 400+ integrations, native AI capabilities, and a fair-code license, n8n lets you build powerful automations while maintaining full control over your data and deployments.
 
